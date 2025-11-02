@@ -134,7 +134,8 @@ export default function AbsensiPage() {
         },
         body: JSON.stringify({
           ...formData,
-          tanggal
+          tanggal,
+          siswaId: formData.siswaId === 'all' ? '' : formData.siswaId
         }),
       });
 
@@ -165,7 +166,8 @@ export default function AbsensiPage() {
         },
         body: JSON.stringify({
           ...formData,
-          tanggal
+          tanggal,
+          guruId: formData.guruId === 'all' ? '' : formData.guruId
         }),
       });
 

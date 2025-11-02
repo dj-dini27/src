@@ -87,7 +87,11 @@ export default function EditKelasPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          nama: formData.nama,
+          waliId: formData.waliId === 'none' ? null : formData.waliId,
+          pembinaId: formData.pembinaId === 'none' ? null : formData.pembinaId
+        }),
       });
 
       if (res.ok) {
@@ -159,7 +163,7 @@ export default function EditKelasPage() {
                     <SelectValue placeholder="Pilih wali kelas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tidak ada wali kelas</SelectItem>
+                    <SelectItem value="none">Tidak ada wali kelas</SelectItem>
                     {guruList.map((guru) => (
                       <SelectItem key={guru.id} value={guru.id}>
                         {guru.nama} {guru.jabatan && `(${guru.jabatan})`}
@@ -176,7 +180,7 @@ export default function EditKelasPage() {
                     <SelectValue placeholder="Pilih pembina" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tidak ada pembina</SelectItem>
+                    <SelectItem value="none">Tidak ada pembina</SelectItem>
                     {guruList.map((guru) => (
                       <SelectItem key={guru.id} value={guru.id}>
                         {guru.nama} {guru.jabatan && `(${guru.jabatan})`}

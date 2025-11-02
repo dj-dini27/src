@@ -50,7 +50,11 @@ export default function TambahKelasPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          nama,
+          waliId: waliId === 'none' ? null : waliId,
+          pembinaId: pembinaId === 'none' ? null : pembinaId
+        }),
       });
 
       if (res.ok) {
@@ -114,7 +118,7 @@ export default function TambahKelasPage() {
                     <SelectValue placeholder="Pilih wali kelas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tidak ada wali kelas</SelectItem>
+                    <SelectItem value="none">Tidak ada wali kelas</SelectItem>
                     {guruList.map((guru) => (
                       <SelectItem key={guru.id} value={guru.id}>
                         {guru.nama} {guru.jabatan && `(${guru.jabatan})`}
@@ -131,7 +135,7 @@ export default function TambahKelasPage() {
                     <SelectValue placeholder="Pilih pembina" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tidak ada pembina</SelectItem>
+                    <SelectItem value="none">Tidak ada pembina</SelectItem>
                     {guruList.map((guru) => (
                       <SelectItem key={guru.id} value={guru.id}>
                         {guru.nama} {guru.jabatan && `(${guru.jabatan})`}

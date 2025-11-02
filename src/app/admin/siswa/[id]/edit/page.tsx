@@ -98,7 +98,15 @@ export default function EditSiswaPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          nis,
+          nisn,
+          email,
+          noHP,
+          nama: nama || null,
+          alamat: alamat || null,
+          kelasId: kelasId === 'none' ? null : kelasId
+        }),
       });
 
       if (res.ok) {
@@ -214,7 +222,7 @@ export default function EditSiswaPage() {
                     <SelectValue placeholder="Pilih kelas" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tidak ada kelas</SelectItem>
+                    <SelectItem value="none">Tidak ada kelas</SelectItem>
                     {kelasList.map((kelas) => (
                       <SelectItem key={kelas.id} value={kelas.id}>
                         {kelas.nama}
