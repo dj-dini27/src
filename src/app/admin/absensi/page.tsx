@@ -98,7 +98,7 @@ export default function AbsensiPage() {
     try {
       const params = new URLSearchParams();
       if (tanggal) params.append('tanggal', tanggal);
-      if (kelasId) params.append('kelasId', kelasId);
+      if (kelasId && kelasId !== 'all') params.append('kelasId', kelasId);
       
       const res = await fetch(`/api/admin/absensi/siswa?${params}`);
       const data = await res.json();
@@ -112,7 +112,7 @@ export default function AbsensiPage() {
     try {
       const params = new URLSearchParams();
       if (tanggal) params.append('tanggal', tanggal);
-      if (guruId) params.append('guruId', guruId);
+      if (guruId && guruId !== 'all') params.append('guruId', guruId);
       
       const res = await fetch(`/api/admin/absensi/guru?${params}`);
       const data = await res.json();
@@ -245,7 +245,7 @@ export default function AbsensiPage() {
                       <SelectValue placeholder="Pilih kelas" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Semua kelas</SelectItem>
+                      <SelectItem value="all">Semua kelas</SelectItem>
                       {kelasList.map((kelas) => (
                         <SelectItem key={kelas.id} value={kelas.id}>
                           {kelas.nama}
@@ -273,8 +273,8 @@ export default function AbsensiPage() {
                         <SelectValue placeholder="Pilih siswa" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="all">Pilih siswa</SelectItem>
                         {/* TODO: Fetch siswa by kelas */}
-                        <SelectItem value="">Pilih siswa</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -382,7 +382,7 @@ export default function AbsensiPage() {
                       <SelectValue placeholder="Pilih guru" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Semua guru</SelectItem>
+                      <SelectItem value="all">Semua guru</SelectItem>
                       {guruList.map((guru) => (
                         <SelectItem key={guru.id} value={guru.id}>
                           {guru.nama} {guru.jabatan && `(${guru.jabatan})`}
