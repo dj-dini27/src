@@ -30,7 +30,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string, role: string, nis?: string) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -64,14 +64,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setToken(storedToken);
+        
+        // Verify token is still valid by calling /api/auth/me
+        verifyToken(storedToken);
       } catch (error) {
         console.error('Error parsing stored user:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        clearAuthData();
       }
     }
     setIsLoading(false);
   }, []);
+
+  const verifyToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        // Token is invalid or expired
+        clearAuthData();
+        return false;
+      }
+
+      const data = await response.json();
+      setUser(data.user);
+      return true;
+    } catch (error) {
+      console.error('Token verification error:', error);
+      clearAuthData();
+      return false;
+    }
+  };
+
+  const clearAuthData = () => {
+    setUser(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+  };
 
   const login = async (email: string, password: string, role: string, nis?: string): Promise<boolean> => {
     try {
@@ -123,10 +156,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Logout API error:', error);
     } finally {
       // Clear local state regardless of API call success
-      setUser(null);
-      setToken(null);
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      clearAuthData();
     }
   };
 

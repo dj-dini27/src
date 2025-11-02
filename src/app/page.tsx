@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
   GraduationCap, 
   Users, 
@@ -19,42 +20,39 @@ import {
   UserPlus,
   School,
   TrendingUp,
-  CheckCircle
+  CheckCircle,
+  AlertCircle,
+  Info
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/auth-context';
 
 export default function Home() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const { login, isLoading, isAuthenticated, user } = useAuth();
+  const [loginError, setLoginError] = useState('');
+  const [loginSuccess, setLoginSuccess] = useState('');
 
   useEffect(() => {
-    // Check if user is logged in (you can implement proper auth check here)
-    const token = localStorage.getItem('token');
-    const role = localStorage.getItem('userRole');
-    if (token && role) {
-      setIsLoggedIn(true);
-      setUserRole(role);
+    if (isAuthenticated && user) {
+      setLoginSuccess(`Login berhasil! Selamat datang, ${user.name}`);
+      setLoginError('');
     }
-  }, []);
+  }, [isAuthenticated, user]);
 
-  const handleLogin = (role: string) => {
-    // Simulate login (implement proper authentication)
-    localStorage.setItem('token', 'mock-token');
-    localStorage.setItem('userRole', role);
-    setIsLoggedIn(true);
-    setUserRole(role);
+  const handleLogin = async (email: string, password: string, role: string, nis?: string) => {
+    setLoginError('');
+    setLoginSuccess('');
+    
+    const success = await login(email, password, role, nis);
+    
+    if (!success) {
+      setLoginError('Login gagal. Periksa kembali email/NIS dan password Anda.');
+    }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userRole');
-    setIsLoggedIn(false);
-    setUserRole(null);
-  };
-
-  if (isLoggedIn) {
+  if (isAuthenticated && user) {
     // Redirect based on role
-    if (userRole === 'ADMIN') {
+    if (user.role === 'ADMIN') {
       return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
           <nav className="bg-white shadow-sm border-b">
@@ -68,7 +66,6 @@ export default function Home() {
                   <Link href="/admin">
                     <Button>Dashboard Admin</Button>
                   </Link>
-                  <Button variant="outline" onClick={handleLogout}>Logout</Button>
                 </div>
               </div>
             </div>
@@ -86,21 +83,26 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {loginSuccess && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      {loginSuccess}
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <Link href="/admin">
                   <Button className="w-full">
                     <GraduationCap className="mr-2 h-4 w-4" />
                     Masuk ke Dashboard
                   </Button>
                 </Link>
-                <Button variant="outline" className="w-full" onClick={handleLogout}>
-                  Logout
-                </Button>
               </CardContent>
             </Card>
           </div>
         </div>
       );
-    } else if (userRole === 'GURU') {
+    } else if (user.role === 'GURU') {
       return (
         <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
           <nav className="bg-white shadow-sm border-b">
@@ -111,7 +113,9 @@ export default function Home() {
                   <span className="text-xl font-bold text-gray-900">Sistem Sekolah</span>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <Button variant="outline" onClick={handleLogout}>Logout</Button>
+                  <Link href="/guru">
+                    <Button>Dashboard Guru</Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -129,8 +133,16 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {loginSuccess && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      {loginSuccess}
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="space-y-2">
-                  <Link href="/guru/dashboard">
+                  <Link href="/guru">
                     <Button className="w-full">
                       <BookOpen className="mr-2 h-4 w-4" />
                       Dashboard Guru
@@ -143,15 +155,12 @@ export default function Home() {
                     </Button>
                   </Link>
                 </div>
-                <Button variant="outline" className="w-full" onClick={handleLogout}>
-                  Logout
-                </Button>
               </CardContent>
             </Card>
           </div>
         </div>
       );
-    } else if (userRole === 'SISWA') {
+    } else if (user.role === 'SISWA') {
       return (
         <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100">
           <nav className="bg-white shadow-sm border-b">
@@ -162,7 +171,9 @@ export default function Home() {
                   <span className="text-xl font-bold text-gray-900">Sistem Sekolah</span>
                 </div>
                 <div className="flex items-center space-x-4">
-                  <Button variant="outline" onClick={handleLogout}>Logout</Button>
+                  <Link href="/siswa">
+                    <Button>Dashboard Siswa</Button>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -180,8 +191,16 @@ export default function Home() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {loginSuccess && (
+                  <Alert className="bg-green-50 border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      {loginSuccess}
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <div className="space-y-2">
-                  <Link href="/siswa/dashboard">
+                  <Link href="/siswa">
                     <Button className="w-full">
                       <TrendingUp className="mr-2 h-4 w-4" />
                       Dashboard Siswa
@@ -194,9 +213,6 @@ export default function Home() {
                     </Button>
                   </Link>
                 </div>
-                <Button variant="outline" className="w-full" onClick={handleLogout}>
-                  Logout
-                </Button>
               </CardContent>
             </Card>
           </div>
@@ -253,7 +269,7 @@ export default function Home() {
                 className="text-lg px-8 py-6"
               >
                 <LogIn className="mr-2 h-5 w-5" />
-                Mulai Sekarang
+                Masuk Sekarang
               </Button>
               <Button 
                 variant="outline" 
@@ -461,7 +477,7 @@ export default function Home() {
               Login ke Sistem
             </h2>
             <p className="text-xl text-gray-600">
-              Pilih role Anda untuk masuk ke sistem
+              Masuk dengan akun Anda untuk mengakses sistem
             </p>
           </div>
 
@@ -473,6 +489,24 @@ export default function Home() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              {loginError && (
+                <Alert className="mb-4 bg-red-50 border-red-200">
+                  <AlertCircle className="h-4 w-4 text-red-600" />
+                  <AlertDescription className="text-red-800">
+                    {loginError}
+                  </AlertDescription>
+                </Alert>
+              )}
+              
+              {loginSuccess && (
+                <Alert className="mb-4 bg-green-50 border-green-200">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-green-800">
+                    {loginSuccess}
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <Tabs defaultValue="admin" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="admin">Admin</TabsTrigger>
@@ -487,7 +521,6 @@ export default function Home() {
                       id="admin-email" 
                       type="email" 
                       placeholder="admin@sekolah.sch.id"
-                      defaultValue="admin@sekolah.sch.id"
                     />
                   </div>
                   <div className="space-y-2">
@@ -496,15 +529,23 @@ export default function Home() {
                       id="admin-password" 
                       type="password" 
                       placeholder="Masukkan password"
-                      defaultValue="admin123"
                     />
                   </div>
                   <Button 
                     className="w-full" 
-                    onClick={() => handleLogin('ADMIN')}
+                    onClick={() => {
+                      const email = (document.getElementById('admin-email') as HTMLInputElement)?.value;
+                      const password = (document.getElementById('admin-password') as HTMLInputElement)?.value;
+                      if (email && password) {
+                        handleLogin(email, password, 'ADMIN');
+                      } else {
+                        setLoginError('Email dan password wajib diisi');
+                      }
+                    }}
+                    disabled={isLoading}
                   >
                     <Shield className="mr-2 h-4 w-4" />
-                    Login sebagai Admin
+                    {isLoading ? 'Loading...' : 'Login sebagai Admin'}
                   </Button>
                 </TabsContent>
                 
@@ -515,7 +556,6 @@ export default function Home() {
                       id="guru-email" 
                       type="email" 
                       placeholder="guru@sekolah.sch.id"
-                      defaultValue="guru@sekolah.sch.id"
                     />
                   </div>
                   <div className="space-y-2">
@@ -524,15 +564,23 @@ export default function Home() {
                       id="guru-password" 
                       type="password" 
                       placeholder="Masukkan password"
-                      defaultValue="guru123"
                     />
                   </div>
                   <Button 
                     className="w-full" 
-                    onClick={() => handleLogin('GURU')}
+                    onClick={() => {
+                      const email = (document.getElementById('guru-email') as HTMLInputElement)?.value;
+                      const password = (document.getElementById('guru-password') as HTMLInputElement)?.value;
+                      if (email && password) {
+                        handleLogin(email, password, 'GURU');
+                      } else {
+                        setLoginError('Email dan password wajib diisi');
+                      }
+                    }}
+                    disabled={isLoading}
                   >
                     <GraduationCap className="mr-2 h-4 w-4" />
-                    Login sebagai Guru
+                    {isLoading ? 'Loading...' : 'Login sebagai Guru'}
                   </Button>
                 </TabsContent>
                 
@@ -543,7 +591,6 @@ export default function Home() {
                       id="siswa-nis" 
                       type="text" 
                       placeholder="Nomor Induk Siswa"
-                      defaultValue="12345"
                     />
                   </div>
                   <div className="space-y-2">
@@ -552,21 +599,34 @@ export default function Home() {
                       id="siswa-password" 
                       type="password" 
                       placeholder="Masukkan password"
-                      defaultValue="siswa123"
                     />
                   </div>
                   <Button 
                     className="w-full" 
-                    onClick={() => handleLogin('SISWA')}
+                    onClick={() => {
+                      const nis = (document.getElementById('siswa-nis') as HTMLInputElement)?.value;
+                      const password = (document.getElementById('siswa-password') as HTMLInputElement)?.value;
+                      if (nis && password) {
+                        handleLogin('', password, 'SISWA', nis);
+                      } else {
+                        setLoginError('NIS dan password wajib diisi');
+                      }
+                    }}
+                    disabled={isLoading}
                   >
                     <Users className="mr-2 h-4 w-4" />
-                    Login sebagai Siswa
+                    {isLoading ? 'Loading...' : 'Login sebagai Siswa'}
                   </Button>
                 </TabsContent>
               </Tabs>
               
               <div className="mt-6 text-center text-sm text-gray-600">
-                <p>Untuk demo, gunakan password default sesuai role</p>
+                <Alert className="bg-blue-50 border-blue-200">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-blue-800">
+                    Gunakan akun yang telah terdaftar di sistem untuk login.
+                  </AlertDescription>
+                </Alert>
               </div>
             </CardContent>
           </Card>
@@ -646,7 +706,7 @@ export default function Home() {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Sistem Informasi Sekolah. All rights reserved.</p>
+            <p>© 2024 Sistem Informasi Sekolah. All rights reserved.</p>
           </div>
         </div>
       </footer>

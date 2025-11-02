@@ -1,89 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { verifyJWT, extractJWT } from '@/lib/jwt';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token from Authorization header
-    const authHeader = request.headers.get('authorization');
+    // Extract token from request
+    const token = extractJWT(request);
     
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       return NextResponse.json(
         { error: 'Token tidak valid' },
         { status: 401 }
       );
     }
 
-    const token = authHeader.substring(7);
+    // Verify JWT token
+    const payload = await verifyJWT(token);
 
-    try {
-      // Decode token (simplified for demo)
-      const decoded = JSON.parse(Buffer.from(token, 'base64').toString());
-      
-      // Check if token is expired (24 hours)
-      if (Date.now() - decoded.timestamp > 24 * 60 * 60 * 1000) {
-        return NextResponse.json(
-          { error: 'Token expired' },
-          { status: 401 }
-        );
-      }
-
-      // Return user data based on role
-      let userData = null;
-      
-      if (decoded.role === 'ADMIN') {
-        userData = {
-          id: decoded.id,
-          name: 'Administrator',
-          email: 'admin@sekolah.sch.id',
-          role: 'ADMIN'
-        };
-      } else if (decoded.role === 'GURU') {
-        userData = {
-          id: decoded.id,
-          name: 'Guru Demo',
-          email: 'guru@sekolah.sch.id',
-          role: 'GURU',
+    // Query user from database based on decoded info
+    let userData = null;
+    
+    if (payload.role === 'ADMIN') {
+      userData = await db.user.findUnique({
+        where: { id: payload.id, role: 'ADMIN' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true
+        }
+      });
+    } else if (payload.role === 'GURU') {
+      userData = await db.user.findUnique({
+        where: { id: payload.id, role: 'GURU' },
+        include: {
           guru: {
-            id: decoded.id,
-            nama: 'Guru Demo',
-            jabatan: 'Guru Matematika'
-          }
-        };
-      } else if (decoded.role === 'SISWA') {
-        userData = {
-          id: decoded.id,
-          name: 'Siswa Demo',
-          email: 'siswa@sekolah.sch.id',
-          role: 'SISWA',
-          siswa: {
-            id: decoded.id,
-            nis: '12345',
-            nisn: '1234567890',
-            nama: 'Siswa Demo',
-            email: 'siswa@sekolah.sch.id',
-            noHP: '08123456789',
-            kelas: {
-              id: 'kelas_demo',
-              nama: 'XII IPA 1'
+            select: {
+              id: true,
+              nama: true,
+              jabatan: true
             }
           }
-        };
-      }
+        }
+      });
+    } else if (payload.role === 'SISWA') {
+      userData = await db.user.findUnique({
+        where: { id: payload.id, role: 'SISWA' },
+        include: {
+          siswa: {
+            include: {
+              kelas: {
+                select: {
+                  id: true,
+                  nama: true
+                }
+              }
+            }
+          }
+        }
+      });
+    }
 
-      if (!userData) {
-        return NextResponse.json(
-          { error: 'User tidak ditemukan' },
-          { status: 404 }
-        );
-      }
-
-      return NextResponse.json({ user: userData });
-
-    } catch (decodeError) {
+    if (!userData) {
       return NextResponse.json(
-        { error: 'Token tidak valid' },
-        { status: 401 }
+        { error: 'User tidak ditemukan' },
+        { status: 404 }
       );
     }
+
+    return NextResponse.json({ user: userData });
 
   } catch (error) {
     console.error('Auth me error:', error);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { createUserToken } from '@/lib/jwt';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Cari user admin
+      // Cari user admin di database
       user = await db.user.findUnique({
         where: { email, role: 'ADMIN' },
         include: {
@@ -33,21 +34,6 @@ export async function POST(request: NextRequest) {
           siswa: true
         }
       });
-
-      // Demo: allow default admin login
-      if (!user && email === 'admin@sekolah.sch.id' && password === 'admin123') {
-        user = {
-          id: 'admin_demo',
-          name: 'Administrator',
-          email: 'admin@sekolah.sch.id',
-          role: 'ADMIN',
-          password: 'admin123', // In production, this should be hashed
-          guruId: null,
-          siswaId: null,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-      }
 
     } else if (role === 'GURU') {
       if (!email) {
@@ -57,7 +43,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Cari user guru
+      // Cari user guru di database
       user = await db.user.findUnique({
         where: { email, role: 'GURU' },
         include: {
@@ -70,26 +56,6 @@ export async function POST(request: NextRequest) {
           }
         }
       });
-
-      // Demo: allow default guru login
-      if (!user && email === 'guru@sekolah.sch.id' && password === 'guru123') {
-        user = {
-          id: 'guru_demo',
-          name: 'Guru Demo',
-          email: 'guru@sekolah.sch.id',
-          role: 'GURU',
-          password: 'guru123', // In production, this should be hashed
-          guruId: 'guru_demo',
-          siswaId: null,
-          guru: {
-            id: 'guru_demo',
-            nama: 'Guru Demo',
-            jabatan: 'Guru Matematika'
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-      }
 
     } else if (role === 'SISWA') {
       if (!nis) {
@@ -112,42 +78,17 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      // Demo: allow default siswa login
-      if (!siswa && nis === '12345' && password === 'siswa123') {
-        user = {
-          id: 'siswa_demo',
-          name: 'Siswa Demo',
-          email: 'siswa@sekolah.sch.id',
-          role: 'SISWA',
-          password: 'siswa123', // In production, this should be hashed
-          guruId: null,
-          siswaId: 'siswa_demo',
-          siswa: {
-            id: 'siswa_demo',
-            nis: '12345',
-            nisn: '1234567890',
-            nama: 'Siswa Demo',
-            email: 'siswa@sekolah.sch.id',
-            noHP: '08123456789',
-            kelas: {
-              id: 'kelas_demo',
-              nama: 'XII IPA 1'
-            }
-          },
-          createdAt: new Date(),
-          updatedAt: new Date()
-        };
-      } else if (siswa) {
+      if (siswa) {
         // Cari user terkait siswa
         const userRecord = await db.user.findUnique({
-          where: { siswaId: siswa.id, role: 'SISWA' }
+          where: { siswaId: siswa.id, role: 'SISWA' },
+          include: {
+            siswa: true
+          }
         });
 
         if (userRecord) {
-          user = {
-            ...userRecord,
-            siswa
-          };
+          user = userRecord;
         }
       }
     }
@@ -159,21 +100,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validasi password (simplified for demo)
-    // In production, use bcrypt.compare
-    if (user.password !== password) {
+    // Validasi password (simplified - in production use bcrypt.compare)
+    const isPasswordValid = user.password === password;
+    
+    if (!isPasswordValid) {
       return NextResponse.json(
         { error: 'Email/NIS atau password salah' },
         { status: 401 }
       );
     }
 
-    // Generate token (simplified for demo)
-    const token = Buffer.from(JSON.stringify({
+    // Generate JWT token
+    const token = await createUserToken({
       id: user.id,
-      role: user.role,
-      timestamp: Date.now()
-    })).toString('base64');
+      email: user.email,
+      role: user.role
+    });
 
     // Prepare response data
     const responseData = {
