@@ -13,20 +13,118 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  GURU
+  SISWA
+}
+
+enum StatusGuru {
+  HADIR
+  TIDAK
+  HADIR_DILUAR_JADWAL
+}
+
+enum StatusSiswa {
+  HADIR
+  IZIN
+  SAKIT
+  ALPHA
+  TERLAMBAT
+}
+
 model User {
   id        String   @id @default(cuid())
+  name      String
   email     String   @unique
-  name      String?
+  password  String
+  role      Role
+  guruId    String?  @unique
+  guru      Guru?    @relation("UserGuru", fields: [guruId], references: [id])
+  siswaId   String?  @unique
+  siswa     Siswa?   @relation("UserSiswa", fields: [siswaId], references: [id])
+  notifikasi Notifikasi[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Post {
-  id        String   @id @default(cuid())
+model Guru {
+  id         String      @id
+  nama      String
+  jabatan    String?
+  waliKelas  Kelas[]     @relation("WaliKelas")
+  pembina    Kelas[]     @relation("Pembina")
+  mapel      MapelGuru[]
+  absensi    AbsensiGuru[]
+  user       User?       @relation("UserGuru")
+}
+
+model Siswa {
+  id        String       @id
+  nis       String       @unique
+  nisn      String       @unique
+  email     String       @unique
+  noHP      String
+  nama      String?
+  alamat    String?
+  kelas     Kelas?       @relation(fields: [kelasId], references: [id])
+  kelasId   String?
+  absensi   AbsensiSiswa[]
+  user      User?        @relation("UserSiswa")
+}
+
+model Kelas {
+  id          String      @id @default(cuid())
+  nama        String
+  waliId     String?
+  wali        Guru?       @relation("WaliKelas", fields: [waliId], references: [id])
+  pembinaId  String?
+  pembina     Guru?       @relation("Pembina", fields: [pembinaId], references: [id])
+  siswa       Siswa[]
+  mapelGuru   MapelGuru[] @relation("KelasMapelGuru")
+}
+
+model Mapel {
+  id      String      @id @default(cuid())
+  nama    String
+  guru    MapelGuru[]
+}
+
+model MapelGuru {
+  id       String   @id @default(cuid())
+  guru     Guru     @relation(fields: [guruId], references: [id])
+  guruId   String
+  mapel    Mapel    @relation(fields: [mapelId], references: [id])
+  mapelId  String
+  kelas    Kelas?   @relation("KelasMapelGuru", fields: [kelasId], references: [id])
+  kelasId  String?
+}
+
+model AbsensiGuru {
+  id        String      @id @default(cuid())
+  guru      Guru        @relation(fields: [guruId], references: [id])
+  guruId    String
+  tanggal   DateTime
+  status    StatusGuru
+  keterangan String?
+}
+
+model AbsensiSiswa {
+  id        String      @id @default(cuid())
+  siswa     Siswa       @relation(fields: [siswaId], references: [id])
+  siswaId   String
+  tanggal   DateTime
+  status    StatusSiswa
+  keterangan String?
+}
+
+model Notifikasi {
+  id        String      @id @default(cuid())
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String
   title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  message   String
+  read      Boolean     @default(false)
+  createdAt DateTime    @default(now())
 }

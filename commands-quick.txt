@@ -1,0 +1,43 @@
+# Quick Setup Commands - Sistem Admin Sekolah
+
+# Create all folders at once
+mkdir -p src/app/admin/{siswa,guru,kelas}/[id]/edit
+mkdir -p src/app/admin/{siswa,guru,kelas}/tambah
+mkdir -p src/app/admin/{absensi,notifikasi,pengaturan}
+mkdir -p src/app/api/admin/{siswa,guru,kelas}/[id]
+mkdir -p src/app/api/admin/absensi/{guru,siswa}
+mkdir -p src/app/api/admin/{notifikasi/[id],dashboard,mapel/[id]}
+mkdir -p src/components/{admin,ui}
+mkdir -p src/{lib,hooks,types,config,styles}
+
+# Create all admin pages
+touch src/app/admin/{layout,page}.tsx
+touch src/app/admin/siswa/{page,tambah/page}.tsx
+touch src/app/admin/siswa/[id]/edit/page.tsx
+touch src/app/admin/guru/{page,tambah/page}.tsx
+touch src/app/admin/guru/[id]/edit/page.tsx
+touch src/app/admin/kelas/{page,tambah/page}.tsx
+touch src/app/admin/kelas/[id]/edit/page.tsx
+touch src/app/admin/{absensi,notifikasi,pengaturan}/page.tsx
+
+# Create all API routes
+touch src/app/api/admin/siswa/{route,[id]/route}.ts
+touch src/app/api/admin/guru/{route,[id]/route}.ts
+touch src/app/api/admin/kelas/{route,[id]/route}.ts
+touch src/app/api/admin/absensi/{guru/siswa}/route.ts
+touch src/app/api/admin/notifikasi/{route,[id]/route}.ts
+touch src/app/api/admin/{dashboard,mapel}/route.ts
+touch src/app/api/admin/mapel/[id]/route.ts
+
+# Create components
+touch src/components/admin/{sidebar,header,layout}.tsx
+touch src/components/ui/{button,card,input,label,badge,avatar,dropdown-menu,table,dialog,form,textarea,select,checkbox,switch,toast}.tsx
+
+# Create utilities
+touch src/lib/{db,utils,validations,types}.ts
+touch src/hooks/{use-toast,use-debounce,use-local-storage}.ts
+touch src/types/{index,api,auth,siswa,guru,kelas,absensi,notifikasi}.ts
+touch src/config/{constants,api}.ts
+touch src/styles/{globals,components}.css
+
+echo "🎉 Setup complete! All files and folders created."
